@@ -1,0 +1,402 @@
+/* ============================================================
+   Wordle Helper — design tokens
+   Concept: an engineer's logic notebook. Faint graph-paper grid,
+   monospace "data" type for letters/numbers, a red marking-pen
+   accent for the active action, real Wordle greens/yellows kept
+   intact because that color code IS the content.
+   ============================================================ */
+
+:root {
+  --paper: #12151a;
+  --surface: #1a1e25;
+  --surface-2: #232831;
+  --surface-hover: #2a313b;
+  --grid-line: #1e232b;
+  --ink: #ecedee;
+  --ink-soft: #a7aeb8;
+  --ink-faint: #6b7280;
+  --line: #343a44;
+
+  --green: #4c9a6a;
+  --green-deep: #3c7c56;
+  --yellow: #d9a441;
+  --yellow-deep: #b5842f;
+  --absent: #8a8f98;
+  --absent-deep: #6e7278;
+
+  --accent: #e2584b;
+  --accent-deep: #c2453a;
+  --accent-paper: rgba(226, 88, 75, 0.14);
+
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  --radius: 4px;
+  --shadow-card: 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* faint engineering-graph background, fixed so it doesn't scroll oddly */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.55;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+/* ---------- masthead ---------- */
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.masthead-mark {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  background: var(--surface);
+  transform: rotate(-3deg);
+}
+
+.masthead-text h1 {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  font-style: italic;
+}
+
+/* ---------- panels ---------- */
+.panel {
+  background: var(--surface);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 22px 22px 24px;
+  margin-bottom: 30px;
+}
+
+.panel-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+/* ---------- entry row / tiles ---------- */
+.entry-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.tiles {
+  display: flex;
+  gap: 8px;
+}
+
+.tile {
+  width: 54px;
+  height: 54px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 24px;
+  text-transform: uppercase;
+  background: var(--surface-2);
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.08s ease, background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.tile:hover { border-color: var(--ink-faint); }
+.tile:active { transform: scale(0.95); }
+
+.tile.has-letter { border-color: var(--ink); }
+
+.tile.state-green {
+  background: var(--green);
+  border-color: var(--green-deep);
+  color: #fff;
+}
+.tile.state-yellow {
+  background: var(--yellow);
+  border-color: var(--yellow-deep);
+  color: #fff;
+}
+.tile.state-black {
+  background: var(--absent);
+  border-color: var(--absent-deep);
+  color: #fff;
+}
+
+.tile:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tile.needs-letter {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.tile.needs-color {
+  animation: needs-color-pulse 1s ease-in-out infinite;
+}
+
+@keyframes needs-color-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 88, 75, 0.45); }
+  50% { box-shadow: 0 0 0 4px rgba(226, 88, 75, 0.25); }
+}
+
+.entry-hint {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.entry-hint.error {
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* small tile variant used in the guess log — clickable, same as active tiles */
+.tile.mini {
+  width: 38px;
+  height: 38px;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+/* ---------- buttons ---------- */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actions-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+  margin: 0 4px;
+}
+
+.btn {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--ink);
+  background: var(--surface-2);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+}
+
+.btn:hover { background: var(--surface-hover); }
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent-deep);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-deep); }
+
+.btn-primary.btn-incomplete {
+  background: var(--surface-2);
+  color: var(--accent);
+  cursor: pointer;
+}
+.btn-primary.btn-incomplete:hover { background: var(--accent-paper); }
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-danger-ghost {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+  margin-left: auto;
+}
+.btn-danger-ghost:hover { background: var(--accent-paper); }
+
+.btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- guess log ---------- */
+.log-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.log-row {
+  display: flex;
+  gap: 6px;
+}
+
+.empty-note, .truncate-note {
+  color: var(--ink-faint);
+  font-size: 13.5px;
+  font-style: italic;
+  margin: 0;
+}
+
+/* ---------- results ---------- */
+.stat-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-number {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  min-width: 1ch;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.3;
+}
+
+.stat-search input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--ink);
+  width: 150px;
+  text-transform: lowercase;
+}
+
+.stat-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.word-chip {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.no-results {
+  color: var(--ink-faint);
+  font-style: italic;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}
+
+/* ---------- footer ---------- */
+.page-footer {
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 480px) {
+  .page { padding: 32px 14px 48px; }
+  .tile { width: 44px; height: 44px; font-size: 19px; }
+  .tile.mini { width: 30px; height: 30px; font-size: 13px; }
+  .stat-row { grid-template-columns: auto; }
+  .stat-number { font-size: 36px; }
+  .stat-search input { width: 100%; }
+  .masthead-text h1 { font-size: 21px; }
+}

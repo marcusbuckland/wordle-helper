@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wordle Helper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+
+<main class="page">
+
+  <header class="masthead">
+    <div class="masthead-mark">WH</div>
+    <div class="masthead-text">
+      <h1>Wordle Helper</h1>
+      <p class="subtitle">Log your guesses. Watch the field narrow.</p>
+    </div>
+  </header>
+
+  <section class="panel entry-panel" aria-label="Enter a guess">
+    <div class="panel-label">01 &mdash; ENTER GUESS</div>
+
+    <div class="entry-row">
+      <div class="tiles" id="active-tiles" role="group" aria-label="Current guess tiles">
+        <!-- 5 tiles injected by JS -->
+      </div>
+      <div class="entry-hint" id="entry-hint">type a 5&#8209;letter word &mdash; letters default to gray, click to mark green or yellow</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="submit-guess">Add guess</button>
+      <button class="btn btn-ghost" id="clear-guess">Clear</button>
+      <span class="actions-divider"></span>
+      <button class="btn btn-ghost" id="undo-guess" disabled>Undo last</button>
+      <button class="btn btn-danger-ghost" id="reset-all">Reset all</button>
+    </div>
+  </section>
+
+  <section class="panel log-panel" aria-label="Guess history">
+    <div class="panel-label">02 &mdash; GUESS LOG</div>
+    <div class="log-rows" id="log-rows">
+      <p class="empty-note" id="log-empty">No guesses logged yet &mdash; your board will build here.</p>
+    </div>
+  </section>
+
+  <section class="panel results-panel" aria-label="Possible answers">
+    <div class="panel-label">03 &mdash; REMAINING FIELD</div>
+
+    <div class="stat-row">
+      <div class="stat-number" id="result-count">14,855</div>
+      <div class="stat-label">possible answers<br/>remain</div>
+      <div class="stat-search">
+        <input type="text" id="filter-box" placeholder="filter list&hellip;" maxlength="5" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="word-grid" id="word-grid" aria-label="List of possible words">
+      <!-- word chips injected by JS -->
+    </div>
+    <p class="truncate-note" id="truncate-note" hidden></p>
+  </section>
+
+  <footer class="page-footer">
+    <p>Letters default to gray. Click a tile to cycle: gray &rarr; green &rarr; yellow &rarr; gray. Built for the daily puzzle, kept on your machine.</p>
+  </footer>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
