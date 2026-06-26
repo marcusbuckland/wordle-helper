@@ -304,7 +304,7 @@ body {
   gap: 6px;
 }
 
-.empty-note, .truncate-note {
+.empty-note, .truncate-note, .grid-hint {
   color: var(--ink-faint);
   font-size: 13.5px;
   font-style: italic;
@@ -373,6 +373,22 @@ body {
   background: var(--surface-2);
   text-transform: uppercase;
   color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.word-chip:hover {
+  background: var(--surface-hover);
+  border-color: var(--ink-faint);
+}
+
+.word-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.grid-hint {
+  margin-bottom: 10px;
 }
 
 .no-results {

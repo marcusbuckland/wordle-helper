@@ -103,6 +103,7 @@
       div.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          e.stopPropagation();
           onTileClick(idx);
         }
       });
@@ -209,6 +210,7 @@
         t.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
+            e.stopPropagation();
             onLogTileClick(rowIdx, i);
           }
         });
@@ -258,6 +260,17 @@
       const chip = document.createElement('div');
       chip.className = 'word-chip';
       chip.textContent = w;
+      chip.tabIndex = 0;
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('aria-label', `Use "${w}" as your next guess`);
+      chip.addEventListener('click', () => loadWordIntoActiveRow(w));
+      chip.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          loadWordIntoActiveRow(w);
+        }
+      });
       wordGridEl.appendChild(chip);
     });
 
@@ -266,6 +279,19 @@
       truncateNoteEl.textContent = `showing first ${MAX_DISPLAYED.toLocaleString()} of ${filtered.length.toLocaleString()} — narrow with another guess or the filter box`;
     } else {
       truncateNoteEl.hidden = true;
+    }
+  }
+
+  function loadWordIntoActiveRow(word) {
+    // Populate the entry row from a candidate word, defaulting to gray —
+    // the user still has to color in greens/yellows and submit themselves.
+    word.split('').forEach((letter, i) => {
+      activeTiles[i] = { letter, state: 'black' };
+    });
+    validationActive = false;
+    renderActiveTiles();
+    if (typeof activeTilesEl.scrollIntoView === 'function') {
+      activeTilesEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
