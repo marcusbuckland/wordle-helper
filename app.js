@@ -8,9 +8,47 @@
   const guesses = [];                // [{ word: 'crane', colors: ['black','green',...] }]
   const activeTiles = makeEmptyTiles();
   let validationActive = false;      // true after a failed submit, until the user fixes something
+  let knownGreens = {};              // position (0-4) -> letter confirmed green by an earlier guess
 
   function makeEmptyTiles() {
-    return Array.from({ length: 5 }, () => ({ letter: '', state: null }));
+    return Array.from({ length: 5 }, () => ({ letter: '', state: null, locked: false }));
+  }
+
+  function recomputeKnownGreens() {
+    knownGreens = {};
+    guesses.forEach((g) => {
+      g.colors.forEach((c, i) => {
+        if (c === 'green') knownGreens[i] = g.word[i];
+      });
+    });
+  }
+
+  // Given a position and the letter just placed there, decide whether it
+  // should auto-lock to green because an earlier guess already confirmed
+  // that letter belongs in that exact spot.
+  function autoStateForPosition(idx, letter) {
+    if (knownGreens[idx] && knownGreens[idx] === letter) {
+      return { state: 'green', locked: true };
+    }
+    return { state: 'black', locked: false };
+  }
+
+  // Re-applies the known-greens lock to whatever is currently sitting in the
+  // active row. Used after the guess history changes (undo / edit a logged
+  // guess) so an in-progress guess stays in sync.
+  function reapplyKnownGreensToActiveRow() {
+    for (let i = 0; i < 5; i++) {
+      const tile = activeTiles[i];
+      if (!tile.letter) continue;
+      if (knownGreens[i] && knownGreens[i] === tile.letter) {
+        tile.state = 'green';
+        tile.locked = true;
+      } else if (tile.locked) {
+        // This tile was locked green from a constraint that's since gone away.
+        tile.state = 'black';
+        tile.locked = false;
+      }
+    }
   }
 
   // ---------------------------------------------------------------
@@ -86,6 +124,7 @@
       div.className = 'tile';
       if (tile.letter) div.classList.add('has-letter');
       if (tile.state) div.classList.add(`state-${tile.state}`);
+      if (tile.locked) div.classList.add('locked');
 
       if (validationActive && !tile.letter) div.classList.add('needs-letter');
       if (validationActive && tile.letter && !tile.state) div.classList.add('needs-color');
@@ -95,7 +134,9 @@
       div.setAttribute('role', 'button');
       div.setAttribute(
         'aria-label',
-        tile.letter
+        tile.locked
+          ? `Letter ${tile.letter}, position ${idx + 1}, locked green from an earlier guess.`
+          : tile.letter
           ? `Letter ${tile.letter}, position ${idx + 1}, color ${tile.state || 'unset'}. Click to change color.`
           : `Empty tile, position ${idx + 1}`
       );
@@ -130,7 +171,7 @@
 
   function onTileClick(idx) {
     const tile = activeTiles[idx];
-    if (!tile.letter) return;
+    if (!tile.letter || tile.locked) return;
     tile.state = nextState(tile.state);
     validationActive = false;
     renderActiveTiles();
@@ -154,7 +195,7 @@
       e.preventDefault();
       for (let i = 4; i >= 0; i--) {
         if (activeTiles[i].letter) {
-          activeTiles[i] = { letter: '', state: null };
+          activeTiles[i] = { letter: '', state: null, locked: false };
           validationActive = false;
           renderActiveTiles();
           break;
@@ -171,9 +212,10 @@
     if (/^[a-zA-Z]$/.test(e.key)) {
       for (let i = 0; i < 5; i++) {
         if (!activeTiles[i].letter) {
-          // Default to gray ("black") — most letters end up gray, so this
-          // means the user only has to click to mark greens and yellows.
-          activeTiles[i] = { letter: e.key.toLowerCase(), state: 'black' };
+          const letter = e.key.toLowerCase();
+          // Default to gray, unless an earlier guess already confirmed this
+          // exact letter is green in this exact position — then lock it in.
+          activeTiles[i] = { letter, ...autoStateForPosition(i, letter) };
           validationActive = false;
           renderActiveTiles();
           break;
@@ -223,6 +265,9 @@
   function onLogTileClick(rowIdx, letterIdx) {
     const g = guesses[rowIdx];
     g.colors[letterIdx] = nextState(g.colors[letterIdx]);
+    recomputeKnownGreens();
+    reapplyKnownGreensToActiveRow();
+    renderActiveTiles();
     renderLog();
     renderResults();
   }
@@ -283,10 +328,12 @@
   }
 
   function loadWordIntoActiveRow(word) {
-    // Populate the entry row from a candidate word, defaulting to gray —
-    // the user still has to color in greens/yellows and submit themselves.
+    // Populate the entry row from a candidate word, defaulting to gray
+    // (auto-locking to green where an earlier guess already confirmed that
+    // letter belongs in that position) — the user still has to color in
+    // any remaining yellows and submit themselves.
     word.split('').forEach((letter, i) => {
-      activeTiles[i] = { letter, state: 'black' };
+      activeTiles[i] = { letter, ...autoStateForPosition(i, letter) };
     });
     validationActive = false;
     renderActiveTiles();
@@ -310,6 +357,7 @@
 
     validationActive = false;
     guesses.push({ word, colors });
+    recomputeKnownGreens();
     resetActiveTiles();
     renderLog();
     renderResults();
@@ -317,13 +365,16 @@
   }
 
   function resetActiveTiles() {
-    for (let i = 0; i < 5; i++) activeTiles[i] = { letter: '', state: null };
+    for (let i = 0; i < 5; i++) activeTiles[i] = { letter: '', state: null, locked: false };
     validationActive = false;
     renderActiveTiles();
   }
 
   function undoLastGuess() {
     guesses.pop();
+    recomputeKnownGreens();
+    reapplyKnownGreensToActiveRow();
+    renderActiveTiles();
     renderLog();
     renderResults();
     undoBtn.disabled = guesses.length === 0;
@@ -331,6 +382,7 @@
 
   function resetAll() {
     guesses.length = 0;
+    recomputeKnownGreens();
     resetActiveTiles();
     renderLog();
     renderResults();

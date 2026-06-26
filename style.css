@@ -185,6 +185,21 @@ body {
   color: #fff;
 }
 
+.tile.locked {
+  cursor: default;
+  position: relative;
+}
+.tile.locked:hover { border-color: var(--green-deep); }
+.tile.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 8px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
 .tile:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
