@@ -148,6 +148,29 @@
           onTileClick(idx);
         }
       });
+
+      // Real (invisible) input so mobile browsers surface an on-screen
+      // keyboard. It only accepts pointer focus while the tile is empty —
+      // once a letter is set, it steps aside (pointer-events: none) so taps
+      // fall through to the tile div above and cycle the color as before.
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'tile-input';
+      input.setAttribute('inputmode', 'text');
+      input.setAttribute('autocomplete', 'off');
+      input.setAttribute('autocorrect', 'off');
+      input.setAttribute('autocapitalize', 'characters');
+      input.setAttribute('spellcheck', 'false');
+      input.setAttribute('maxlength', '1');
+      input.setAttribute('aria-label', `Type letter for position ${idx + 1}`);
+      input.setAttribute('enterkeyhint', idx === 4 ? 'done' : 'next');
+      input.tabIndex = -1;
+      if (tile.locked) input.disabled = true;
+      input.style.pointerEvents = tile.letter ? 'none' : 'auto';
+      input.addEventListener('input', (e) => onActiveInputEvent(idx, e));
+      input.addEventListener('keydown', (e) => onActiveInputKeydown(idx, e));
+      div.appendChild(input);
+
       activeTilesEl.appendChild(div);
     });
 
@@ -185,11 +208,66 @@
   }
 
   // ---------------------------------------------------------------
+  // Mobile keyboard entry (per-tile invisible <input>)
+  // ---------------------------------------------------------------
+  function findNextEmptyIndex(fromIdx) {
+    for (let i = fromIdx + 1; i < 5; i++) {
+      if (!activeTiles[i].letter) return i;
+    }
+    return -1;
+  }
+
+  function focusTileInputAt(idx) {
+    if (idx < 0) return;
+    const inputs = activeTilesEl.querySelectorAll('.tile-input');
+    const target = inputs[idx];
+    if (target) target.focus();
+  }
+
+  function onActiveInputEvent(idx, e) {
+    const raw = e.target.value;
+    e.target.value = ''; // always clear so the next keystroke registers as fresh input
+    const match = raw.match(/[a-zA-Z]/);
+    if (!match) return;
+
+    const tile = activeTiles[idx];
+    if (tile.locked) return;
+
+    const letter = match[0].toLowerCase();
+    activeTiles[idx] = { letter, ...autoStateForPosition(idx, letter) };
+    validationActive = false;
+    renderActiveTiles();
+    focusTileInputAt(findNextEmptyIndex(idx));
+  }
+
+  function onActiveInputKeydown(idx, e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitGuess();
+      return;
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const tile = activeTiles[idx];
+      if (tile.locked) return;
+      if (tile.letter) {
+        activeTiles[idx] = { letter: '', state: null, locked: false };
+        validationActive = false;
+        renderActiveTiles();
+      }
+      // Stays on the same box either way — never jumps back to the previous tile.
+      focusTileInputAt(idx);
+    }
+  }
+
+  // ---------------------------------------------------------------
   // Keyboard entry (works for physical + most mobile soft keyboards)
   // ---------------------------------------------------------------
   function handleKeydown(e) {
     // Don't hijack typing while the filter box is focused.
     if (document.activeElement === filterBoxEl) return;
+    // A focused tile's own <input> (mobile keyboard flow) handles its own typing.
+    if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('tile-input')) return;
 
     if (e.key === 'Backspace') {
       e.preventDefault();
