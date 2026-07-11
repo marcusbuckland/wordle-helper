@@ -217,6 +217,16 @@
     return -1;
   }
 
+  // Walks backward from fromIdx looking for the nearest editable (non-locked)
+  // box, skipping any green-locked tiles along the way since those can't be
+  // touched by backspace.
+  function findPrevEditableIndex(fromIdx) {
+    for (let i = fromIdx - 1; i >= 0; i--) {
+      if (!activeTiles[i].locked) return i;
+    }
+    return -1;
+  }
+
   function focusTileInputAt(idx) {
     if (idx < 0) return;
     const inputs = activeTilesEl.querySelectorAll('.tile-input');
@@ -250,13 +260,24 @@
       e.preventDefault();
       const tile = activeTiles[idx];
       if (tile.locked) return;
+
       if (tile.letter) {
+        // Box has a letter — delete it and stay put, ready to retype.
         activeTiles[idx] = { letter: '', state: null, locked: false };
         validationActive = false;
         renderActiveTiles();
+        focusTileInputAt(idx);
+        return;
       }
-      // Stays on the same box either way — never jumps back to the previous tile.
-      focusTileInputAt(idx);
+
+      // Box is already empty — step back to the previous editable box and
+      // delete its letter too, same as backspacing through normal text.
+      const prevIdx = findPrevEditableIndex(idx);
+      if (prevIdx < 0) return;
+      activeTiles[prevIdx] = { letter: '', state: null, locked: false };
+      validationActive = false;
+      renderActiveTiles();
+      focusTileInputAt(prevIdx);
     }
   }
 
